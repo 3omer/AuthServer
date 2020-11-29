@@ -13,7 +13,7 @@ const router = require("express").Router()
 //     }
 // })
 
-// handle post
+// handle post: register
 router.post("/api/users", async (req, res) => {
     const data = req.body
     try {
@@ -28,7 +28,30 @@ router.post("/api/users", async (req, res) => {
         })
 
     } catch (error) {
+        // TODO: type of error: validation? connection?
         res.status(400).send(error)
+    }
+})
+
+// login
+router.post("/api/users/login", async (req, res) => {
+    const { email, password } = req.body
+    try {
+        const user = await User.findByCredentials(email, password)
+        if (!user) {
+            return res.status(401).json({ error: "Invalid login credentials" })
+        }
+        const token = await user.generateToken()
+        return res.json({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            token: token
+        })
+
+    } catch (error) {
+        console.error(error)
+        res.status(500).send(error)
     }
 })
 

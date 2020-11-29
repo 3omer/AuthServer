@@ -40,7 +40,7 @@ userSchema.pre("save", async function () {
     const user = this
     if (user.isModified("password")) {
         if (!validator.isLength(user.password, { min: 7 })) {
-            throw new Error("Short password, minimum characters are 7")
+            throw new Error({ error: "Short password, minimum characters are 7" })
         }
         user.password = await bcrypt.hash(user.password, 8)
     }
@@ -63,11 +63,10 @@ userSchema.methods.generateToken = async function () {
 
 userSchema.statics.findByCredentials = async function (email, password) {
 
-    const invalidCredMsg = { error: "Invalid login credentials" }
     const user = await User.findOne({ email })
-    if (!user) throw new Error(invalidCredMsg)
+    if (!user) return null
     const isPassowrdMatch = await bcrypt.compare(password, user.password)
-    if (!isPassowrdMatch) throw new Error(invalidCredMsg)
+    if (!isPassowrdMatch) return null
     return user
 }
 
