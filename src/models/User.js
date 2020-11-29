@@ -43,7 +43,7 @@ userSchema.pre("save", async function() {
     }
 })
 
-userSchema.instance.generateToken = async function () {
+userSchema.methods.generateToken = async function () {
     const user = this
     const payload = {
         username: user.username,
@@ -58,7 +58,7 @@ userSchema.instance.generateToken = async function () {
     return token
 }
 
-userSchema.static.findByCredentials = async function(email, password) {
+userSchema.statics.findByCredentials = async function(email, password) {
 
     const invalidCredMsg = { error: "Invalid login credentials" }
     const user = await User.findOne({ email })
@@ -69,3 +69,4 @@ userSchema.static.findByCredentials = async function(email, password) {
 }
 
 const User = mongoose.model("User", userSchema)
+module.exports = User

@@ -6,10 +6,10 @@
   "scripts": {
     "start": "env-cmd -f ./.env nodemon src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cross-env NODE_ENV=test MONGODB_URL=mongodb://localhost/testAuthServer JWT_KEY=secretkey JWT_EXP=120 jest"
   },
   "keywords": [],
-  "author": "",
+  "author": "3omer",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -18,5 +18,14 @@
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.10.16",
     "validator": "^13.1.17"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   }
 }
