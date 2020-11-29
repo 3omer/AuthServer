@@ -36,9 +36,12 @@ const userSchema = mongoose.Schema({
 
 })
 
-userSchema.pre("save", async function() {
+userSchema.pre("save", async function () {
     const user = this
     if (user.isModified("password")) {
+        if (!validator.isLength(user.password, { min: 7 })) {
+            throw new Error("Short password, minimum characters are 7")
+        }
         user.password = await bcrypt.hash(user.password, 8)
     }
 })
@@ -50,15 +53,15 @@ userSchema.methods.generateToken = async function () {
         id: user.id
     }
 
-    const token =  jwt.sign(payload, process.env.JWT_KEY, {
+    const token = jwt.sign(payload, process.env.JWT_KEY, {
         expiresIn: process.env.JWT_EXP
     })
-    user.tokens = user.tokens.concat({token})
+    user.tokens = user.tokens.concat({ token })
     await user.save()
     return token
 }
 
-userSchema.statics.findByCredentials = async function(email, password) {
+userSchema.statics.findByCredentials = async function (email, password) {
 
     const invalidCredMsg = { error: "Invalid login credentials" }
     const user = await User.findOne({ email })

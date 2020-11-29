@@ -41,12 +41,10 @@ describe("User Model", () => {
         // console.log(user.tokens)
     })
 
-    it("Find user bu their credentilas", async () => {
+    it("Find user by their credentilas", async () => {
         await new User(testUser).save()
         let user = await User.findByCredentials(testUser.email, testUser.password)
         expect(user.username).toEqual(testUser.username)
     })
-
-
-
+    
 })

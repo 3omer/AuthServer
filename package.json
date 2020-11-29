@@ -6,7 +6,7 @@
   "scripts": {
     "start": "env-cmd -f ./.env nodemon src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "cross-env NODE_ENV=test MONGODB_URL=mongodb://localhost/testAuthServer JWT_KEY=secretkey JWT_EXP=120 jest"
+    "test": "cross-env NODE_ENV=test PORT=5000 MONGODB_URL=mongodb://localhost/testAuthServer JWT_KEY=secretkey JWT_EXP=120 jest"
   },
   "keywords": [],
   "author": "3omer",
@@ -20,7 +20,8 @@
     "validator": "^13.1.17"
   },
   "devDependencies": {
-    "cross-env": "^7.0.2"
+    "cross-env": "^7.0.2",
+    "supertest": "^6.0.1"
   },
   "jest": {
     "testEnvironment": "node",
