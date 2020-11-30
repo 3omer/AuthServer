@@ -4,6 +4,11 @@ const request = require("supertest")
 
 
 const api = "/api/users"
+
+async function dropUsers() {
+    await User.deleteMany()
+}
+
 const getUsers = (limit) => {
     // list of user up to limit, default is 5
     limit = !limit ? 5 : limit
@@ -25,9 +30,7 @@ const registerUser = async (user) => {
 
 describe("/api/users", () => {
 
-    beforeEach(async () => {
-        await User.deleteMany({})
-    })
+    beforeEach(dropUsers)
 
     afterAll(async () => {
         // TODO: tear down the app gracefully
@@ -73,24 +76,23 @@ describe("/api/users", () => {
 })
 
 
-const lgoinUser = async (cred) => {
-    return await request(app).post("/api/users/login").send(cred)
+const lgoinUser = async (user) => {
+    return await request(app).post("/api/users/login").send({
+        email: user.email,
+        password: user.password
+    })
 }
 
 describe("api/users/login", () => {
-    beforeEach(async () => {
-        await User.deleteMany({})
-    })
+    beforeEach(dropUsers)
 
-    afterAll(async () => {
-        await User.deleteMany()
-    })
+    afterAll(dropUsers)
 
     it("retrive a token", async () => {
         let [user] = getUsers(1)
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
-        res = await lgoinUser({ email: user.email, password: user.password })
+        res = await lgoinUser(user)
         expect(res.status).toEqual(200)
         expect(res.body).toHaveProperty("token")
         expect(res.body).not.toHaveProperty("password")
@@ -108,12 +110,13 @@ describe("api/users/login", () => {
 })
 
 describe("api/users/me", () => {
-    beforeEach(async () => {
-        await User.deleteMany()
-    })
+    
+    beforeAll(dropUsers)
+    afterAll(dropUsers)
+    
+    const me = getUsers(1)[0]
 
-    it("get user profile with a token", async () => {
-        const me = getUsers(1)[0]
+    it("get user profile", async () => {
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
 
@@ -131,4 +134,34 @@ describe("api/users/me", () => {
         expect(res.body).toHaveProperty("email")
 
     })
+    
+    it("failes when no token is provided", async() => {
+        const res = await request(app).get("/api/users/me")
+        expect(res.status).toEqual(401)
+    })
+
+    it("failes when token is tampered", async() => {
+        let res = await lgoinUser({
+            email: me.email,
+            password: me.password
+        })
+        
+        let token = res.body.token
+        token[10] = "X"
+
+        res = await request(app).get("/api/users/me").auth(token)
+        expect(res.status).toEqual(401)
+    })
+
+    it("failes when token expires after 2sec", async() => {
+        let token = await (await lgoinUser(me)).body.token
+        expect(typeof token).toBe("string")
+        setTimeout(async () => {
+            let res = await request(app).get("/api/users/me").auth(token)
+            expect(res.status).toEqual("401")
+            expect(res.body).toHaveProperty("error")
+        }, 2500)
+    })
+
 })
+
