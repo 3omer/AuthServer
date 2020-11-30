@@ -2,6 +2,7 @@ const app = require("../app")
 const User = require("../models/User")
 const request = require("supertest")
 
+
 const api = "/api/users"
 const getUsers = (limit) => {
     // list of user up to limit, default is 5
@@ -75,13 +76,18 @@ describe("/api/users", () => {
 const lgoinUser = async (cred) => {
     return await request(app).post("/api/users/login").send(cred)
 }
+
 describe("api/users/login", () => {
     beforeEach(async () => {
         await User.deleteMany({})
     })
 
+    afterAll(async () => {
+        await User.deleteMany()
+    })
+
     it("retrive a token", async () => {
-        let [ user ] = getUsers(1)
+        let [user] = getUsers(1)
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
         res = await lgoinUser({ email: user.email, password: user.password })
@@ -93,9 +99,36 @@ describe("api/users/login", () => {
     it("fails on wrong credentials", async () => {
         let user = getUsers(1)[0]
         let res = await registerUser(user)
-        res = await lgoinUser({ email: user.email, password: user.password+"1" })
+        res = await lgoinUser({ email: user.email, password: user.password + "1" })
         expect(res.status).toEqual(401)
         expect(res.body).toHaveProperty("error")
         // expect(res.body.error).toIncludes("invalid email")
+    })
+
+})
+
+describe("api/users/me", () => {
+    beforeEach(async () => {
+        await User.deleteMany()
+    })
+
+    it("get user profile with a token", async () => {
+        const me = getUsers(1)[0]
+        let res = await registerUser(me)
+        expect(res.status).toEqual(201)
+
+        res = await lgoinUser({
+            email: me.email,
+            password: me.password
+        })
+
+        expect(res.status).toEqual(200)
+        let token = res.body.token
+        expect(typeof token).toBe("string")
+
+        res = await request(app).get("/api/users/me").auth(token, { type: "bearer"})
+        expect(res.status).toEqual(200)
+        expect(res.body).toHaveProperty("email")
+
     })
 })
