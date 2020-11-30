@@ -110,10 +110,10 @@ describe("api/users/login", () => {
 })
 
 describe("api/users/me", () => {
-    
+
     beforeAll(dropUsers)
     afterAll(dropUsers)
-    
+
     const me = getUsers(1)[0]
 
     it("get user profile", async () => {
@@ -129,23 +129,23 @@ describe("api/users/me", () => {
         let token = res.body.token
         expect(typeof token).toBe("string")
 
-        res = await request(app).get("/api/users/me").auth(token, { type: "bearer"})
+        res = await request(app).get("/api/users/me").auth(token, { type: "bearer" })
         expect(res.status).toEqual(200)
         expect(res.body).toHaveProperty("email")
 
     })
-    
-    it("failes when no token is provided", async() => {
+
+    it("failes when no token is provided", async () => {
         const res = await request(app).get("/api/users/me")
         expect(res.status).toEqual(401)
     })
 
-    it("failes when token is tampered", async() => {
+    it("failes when token is tampered", async () => {
         let res = await lgoinUser({
             email: me.email,
             password: me.password
         })
-        
+
         let token = res.body.token
         token[10] = "X"
 
@@ -153,7 +153,7 @@ describe("api/users/me", () => {
         expect(res.status).toEqual(401)
     })
 
-    it("failes when token expires after 2sec", async() => {
+    it("failes when token expires after 2sec", async () => {
         let token = await (await lgoinUser(me)).body.token
         expect(typeof token).toBe("string")
         setTimeout(async () => {
@@ -161,6 +161,29 @@ describe("api/users/me", () => {
             expect(res.status).toEqual("401")
             expect(res.body).toHaveProperty("error")
         }, 2500)
+    })
+
+})
+
+describe("/api/users/logout", () => {
+    beforeAll(dropUsers)
+    afterAll(dropUsers)
+
+    it("delete user token", async () => {
+        let me = getUsers(1)[0]
+        await registerUser(me)
+        let token = (await lgoinUser(me)).body.token
+        expect(typeof token).toBe("string")
+
+        let res = await request(app)
+            .post("/api/users/me/logout")
+            .auth(token)
+
+        expect(res.status).toEqual(200)
+        // directly check the user document
+        const user = await User.findOne({ email: me.email, 'tokens.token': token })
+        expect(user).toEqual(undefined)
+
     })
 
 })
