@@ -1,6 +1,6 @@
 const User = require("../models/User")
 const router = require("express").Router()
-
+const auth = require('../middleware/auth');
 
 // get a list of registered users
 // require app administrator privildges
@@ -53,6 +53,13 @@ router.post("/api/users/login", async (req, res) => {
         console.error(error)
         res.status(500).send(error)
     }
+})
+
+
+// get user profile
+// token required
+router.get("/api/users/me", auth, async (req, res) => {
+    res.json(req.user)
 })
 
 module.exports = router
