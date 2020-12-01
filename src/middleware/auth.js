@@ -6,7 +6,7 @@ const User = require("../models/User")
 const auth = async (req, res, next) => {
     const authHeader = req.header("Authorization")
     try {
-        if (!authHeader) throw new jwt.JsonWebTokenError()
+        if (!authHeader) throw new jwt.JsonWebTokenError("Authorization header is invalid")
         const token = authHeader.replace("Bearer ", "")
         const payload = jwt.verify(token, process.env.JWT_KEY)
         const user = await User.findOne({ _id: payload.id }, { password: false })
@@ -17,6 +17,7 @@ const auth = async (req, res, next) => {
         req.token = token
         next()
     } catch (error) {
+        
         if (error instanceof jwt.TokenExpiredError) {
             return res.status(401).json({ "error": "Token expired" })
         }

@@ -62,4 +62,19 @@ router.get("/api/users/me", auth, async (req, res) => {
     res.json(req.user)
 })
 
+// delete user token
+router.post("/api/users/me/logout", auth, async (req, res) => {
+    let user = req.user
+    user.tokens = user.tokens.filter((ob) => {
+        return ob.token != req.token
+    })
+
+    try {
+        await user.save()
+        return res.json({message: "Logged out successfully"})
+    } catch (error) {
+        res.status(500).json({error: "Internal error"})
+    }
+})
+
 module.exports = router
