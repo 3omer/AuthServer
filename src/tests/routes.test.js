@@ -147,10 +147,11 @@ describe("api/users/me", () => {
         })
 
         let token = res.body.token
-        token[10] = "X"
-
-        res = await request(app).get("/api/users/me").auth(token)
+        token = token.replace("a", "b")        
+        res = await request(app).get("/api/users/me")
+        .auth(token, { type: "bearer" })
         expect(res.status).toEqual(401)
+        expect(res.body.error).toEqual("Invalid token")
     })
 
     it("failes when token expires after 2sec", async () => {
@@ -160,6 +161,8 @@ describe("api/users/me", () => {
             let res = await request(app).get("/api/users/me").auth(token)
             expect(res.status).toEqual("401")
             expect(res.body).toHaveProperty("error")
+            expect(res.body.error).toEqual("Token expired")
+
         }, 2500)
     })
 
@@ -170,21 +173,23 @@ describe("/api/users/logout", () => {
     afterAll(dropUsers)
 
     it("delete user token", async () => {
+        process.env.JWT_EXP = "1h"
         let me = getUsers(1)[0]
         await registerUser(me)
-        let token = (await lgoinUser(me)).body.token
+        let token = await (await lgoinUser(me)).body.token
+        // console.log(token)
         expect(typeof token).toBe("string")
 
         let res = await request(app)
             .post("/api/users/me/logout")
-            .auth(token)
+            .auth(token, { type: "bearer" })
 
+        // console.log(res.body)
         expect(res.status).toEqual(200)
         // directly check the user document
         const user = await User.findOne({ email: me.email, 'tokens.token': token })
-        expect(user).toEqual(undefined)
+        expect(user).toEqual(null)
 
     })
 
 })
-
