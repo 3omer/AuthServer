@@ -76,7 +76,7 @@ describe("/api/users", () => {
 })
 
 
-const lgoinUser = async (user) => {
+const loginUser = async (user) => {
     return await request(app).post("/api/users/login").send({
         email: user.email,
         password: user.password
@@ -129,7 +129,7 @@ describe("api/users/login", () => {
         let user = getUsers()[0]
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
-        res = await lgoinUser(user)        
+        res = await loginUser(user)        
         expect(res.status).toEqual(401)
         expect(res.body.error).toEqual("Account is not verified")
     })
@@ -144,7 +144,7 @@ describe("api/users/login", () => {
         res = await verifyAccount(res.body)
         expect(res.status).toEqual(200)
         // login
-        res = await lgoinUser(user)
+        res = await loginUser(user)
         expect(res.status).toEqual(200)
         expect(res.body).toHaveProperty("token")
         expect(res.body).not.toHaveProperty("password")
@@ -153,7 +153,7 @@ describe("api/users/login", () => {
     it("fails on wrong credentials", async () => {
         let user = getUsers(1)[0]
         let res = await registerUser(user)
-        res = await lgoinUser({ email: user.email, password: user.password + "1" })
+        res = await loginUser({ email: user.email, password: user.password + "1" })
         expect(res.status).toEqual(401)
         expect(res.body).toHaveProperty("error")
         // expect(res.body.error).toIncludes("invalid email")
@@ -176,7 +176,7 @@ describe("api/users/me", () => {
         res = await verifyAccount(res.body)
         expect(res.status).toEqual(200)
         // login
-        res = await lgoinUser({
+        res = await loginUser({
             email: me.email,
             password: me.password
         })
@@ -197,7 +197,7 @@ describe("api/users/me", () => {
     })
 
     it("failes when token is tampered", async () => {
-        let res = await lgoinUser({
+        let res = await loginUser({
             email: me.email,
             password: me.password
         })
@@ -211,7 +211,7 @@ describe("api/users/me", () => {
     })
 
     it("failes when token expires after 2sec", async () => {
-        let token = await (await lgoinUser(me)).body.token
+        let token = await (await loginUser(me)).body.token
         expect(typeof token).toBe("string")
         setTimeout(async () => {
             let res = await request(app).get("/api/users/me").auth(token)
@@ -232,7 +232,7 @@ describe("/api/users/logout", () => {
         process.env.JWT_EXP = "1h"
         let me = getUsers(1)[0]
         await registerUser(me)
-        let token = await (await lgoinUser(me)).body.token
+        let token = await (await loginUser(me)).body.token
         // console.log(token)
         expect(typeof token).toBe("string")
 
