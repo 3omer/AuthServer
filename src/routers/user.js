@@ -1,17 +1,7 @@
 const User = require("../models/User")
 const router = require("express").Router()
 const auth = require('../middleware/auth');
-
-// get a list of registered users
-// require app administrator privildges
-// router.get("/api/users", async (req, res) => {
-//     try {
-//         let users = await User.find()
-//         return res.json(users)
-//     } catch (error) {
-//         res.status(500).send(error)
-//     }
-// })
+const { generateVerifLink, sendVerifEmail } = require("../utils")
 
 // handle post: register
 router.post("/api/users", async (req, res) => {
@@ -20,6 +10,9 @@ router.post("/api/users", async (req, res) => {
         const user = new User(data)
         await user.save()
         const token = await user.generateToken()
+        // build verification link to send it to user email
+        const verifLink = generateVerifLink(user)
+        await sendVerifEmail(verifLink, user.email)
         res.status(201).json({
             id: user.id,
             username: user.username,
@@ -29,8 +22,14 @@ router.post("/api/users", async (req, res) => {
 
     } catch (error) {
         // TODO: type of error: validation? connection?
+        console.error(error.message);
         res.status(400).send(error)
     }
+})
+
+// verify account 
+router.get("/api/users/verify", async () => {
+    
 })
 
 // login
