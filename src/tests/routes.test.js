@@ -128,10 +128,15 @@ describe("api/users/login", () => {
     })
 
 
-    it("retrive a token", async () => {
+    it("login and get token", async () => {
         let [user] = getUsers(1)
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
+        const token = utils.generateVerifLink(res.body)
+        .split("token=")[1]
+        // verify account
+        res = await request(app).get(`/api/users/verify?token=${token}`)
+        expect(res.status).toEqual(200)
         res = await lgoinUser(user)
         expect(res.status).toEqual(200)
         expect(res.body).toHaveProperty("token")
