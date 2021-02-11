@@ -30,8 +30,8 @@ const transporter = nodemailer.createTransport({
  * @param {*} receiverEmail user registered email address
  */
 const sendVerifEmail = async (verifLink, receiverEmail) => {
-    // send mail with defined transport object
-    return await transporter.sendMail({
+    if(process.env.NODE_ENV === "development") return
+    return transporter.sendMail({
         from: '"Omar Mohammed" <omer@example.com>', // sender address
         to: receiverEmail, // list of receivers
         subject: "X-COMPANY verify  your account", // Subject line
