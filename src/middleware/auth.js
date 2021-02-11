@@ -13,6 +13,9 @@ const auth = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ error: "User not found" })
         }
+        if(!user.isVerified) {
+            return res.status(400).json({ error: "Account is not verified" })
+        }
         req.user = user
         req.token = token
         next()
