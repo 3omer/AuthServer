@@ -34,6 +34,10 @@ router.get("/api/users/verify", async (req, res, next) => {
     const token = req.query.token
     try {
         const payload = jwt.verify(token, process.env.JWT_KEY)
+        const user = await User.findById(payload.id)
+        if (!user) return res.status(400).json({error: "Account not found"})
+        user.isVerified = true
+        await user.save()
         return res.json({
             msg: "Your account is now activated"
         })
