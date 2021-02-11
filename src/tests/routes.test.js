@@ -154,18 +154,25 @@ describe("api/users/login", () => {
 
 })
 
+const verifyAccount = async (user) => {
+    const token = utils.generateVerifLink(user).split("token=")[1]
+    return request(app).get(`/api/users/verify?token=${token}`)
+}
 describe("api/users/me", () => {
 
     beforeAll(dropUsers)
     afterAll(dropUsers)
 
     const me = getUsers(1)[0]
-    // it("fail to login if account not verified"){}
     
     it("get user profile", async () => {
+        // register
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
-
+        // verify
+        res = await verifyAccount(res.body)
+        expect(res.status).toEqual(200)
+        // login
         res = await lgoinUser({
             email: me.email,
             password: me.password
