@@ -83,24 +83,31 @@ const lgoinUser = async (user) => {
     })
 }
 
+const verifyAccount = async (user) => {
+    const token = utils.generateVerifLink(user).split("token=")[1]
+    return request(app).get(`/api/users/verify?token=${token}`)
+}
+
 const utils = require("../utils")
 describe("/api/users/verify", () => {
     beforeEach(dropUsers)
     it("activate account when called with valid token", async () => {
 
         const me = getUsers()[0]
+        // register
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
-        let token = utils.generateVerifLink(res.body).split("token=")[1].trim()
-        expect(token.length).toBeGreaterThan(10)
-        res = await request(app).get(`/api/users/verify?token=${token}`)
+        // verify
+        res = await verifyAccount(res.body)
         expect(res.status).toEqual(200)
         expect(res.body.msg).toEqual("Your account is now activated")
     })
 
     it('fails if no token provided', async () => {
         const me = getUsers()[0]
+        // register
         let res = await registerUser(me)
+        // verify
         res = await request(app).get("/api/users/verify")
         expect(res.status).toBe(400)
     })
@@ -130,13 +137,13 @@ describe("api/users/login", () => {
 
     it("login and get token", async () => {
         let [user] = getUsers(1)
+        // register
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
-        const token = utils.generateVerifLink(res.body)
-        .split("token=")[1]
         // verify account
-        res = await request(app).get(`/api/users/verify?token=${token}`)
+        res = await verifyAccount(res.body)
         expect(res.status).toEqual(200)
+        // login
         res = await lgoinUser(user)
         expect(res.status).toEqual(200)
         expect(res.body).toHaveProperty("token")
@@ -154,10 +161,6 @@ describe("api/users/login", () => {
 
 })
 
-const verifyAccount = async (user) => {
-    const token = utils.generateVerifLink(user).split("token=")[1]
-    return request(app).get(`/api/users/verify?token=${token}`)
-}
 describe("api/users/me", () => {
 
     beforeAll(dropUsers)
