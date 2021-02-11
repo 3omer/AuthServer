@@ -230,14 +230,21 @@ describe("/api/users/logout", () => {
     afterAll(dropUsers)
 
     it("delete user token", async () => {
-        process.env.JWT_EXP = "1h"
         let me = getUsers(1)[0]
-        await registerUser(me)
-        let token = await (await loginUser(me)).body.token
+        // register
+        let res = await registerUser(me)
+        
+        // verifiy
+        res = await verifyAccount(res.body)
+        // login
+        res = await loginUser(me)
+        let token = res.body.token
+
         // console.log(token)
         expect(typeof token).toBe("string")
-
-        let res = await request(app)
+        
+        // logout
+        res = await request(app)
             .post("/api/users/me/logout")
             .auth(token, { type: "bearer" })
 
