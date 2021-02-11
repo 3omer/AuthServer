@@ -87,6 +87,16 @@ describe("api/users/login", () => {
     beforeEach(dropUsers)
 
     afterAll(dropUsers)
+    
+    it("fails if not verified", async() => {
+        let user = getUsers()[0]
+        let res = await registerUser(user)
+        expect(res.status).toEqual(201)
+        res = await lgoinUser(user)        
+        expect(res.status).toEqual(401)
+        expect(res.body.error).toEqual("Account is not verified")
+    })
+
 
     it("retrive a token", async () => {
         let [user] = getUsers(1)
@@ -115,7 +125,8 @@ describe("api/users/me", () => {
     afterAll(dropUsers)
 
     const me = getUsers(1)[0]
-
+    // it("fail to login if account not verified"){}
+    
     it("get user profile", async () => {
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
