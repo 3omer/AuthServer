@@ -83,6 +83,36 @@ const lgoinUser = async (user) => {
     })
 }
 
+const utils = require("../utils")
+describe("/api/users/verify", () => {
+    beforeEach(dropUsers)
+    it("activate account when called with valid token", async () => {
+
+        const me = getUsers()[0]
+        let res = await registerUser(me)
+        expect(res.status).toEqual(201)
+        let token = utils.generateVerifLink(res.body).split("token=")[1].trim()
+        expect(token.length).toBeGreaterThan(10)
+        res = await request(app).get(`/api/users/verify?token=${token}`)
+        expect(res.status).toEqual(200)
+        expect(res.body.msg).toEqual("Your account is now activated")
+    })
+
+    it('fails if no token provided', async () => {
+        const me = getUsers()[0]
+        let res = await registerUser(me)
+        res = await request(app).get("/api/users/verify")
+        expect(res.status).toBe(400)
+    })
+    it("fails if token is incorrect", async () => {
+        const me = getUsers()[0]
+        let res = await registerUser(me)
+        res = await request(app)
+        .get("/api/users/verify?token=ljdflakdfmk.dnvsdnfknsdfklnfdfdfsfjn,fsd")
+        expect(res.status).toBe(400)
+    })
+})
+
 describe("api/users/login", () => {
     beforeEach(dropUsers)
 
