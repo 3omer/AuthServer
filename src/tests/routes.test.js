@@ -77,7 +77,7 @@ describe("/api/users", () => {
 
 
 const loginUser = async (user) => {
-    return await request(app).post("/api/users/login").send({
+    return request(app).post("/api/users/login").send({
         email: user.email,
         password: user.password
     })
@@ -211,7 +211,8 @@ describe("api/users/me", () => {
     })
 
     it("failes when token expires after 2sec", async () => {
-        let token = await (await loginUser(me)).body.token
+        let res =  await loginUser(me)
+        let token = res.body.token
         expect(typeof token).toBe("string")
         setTimeout(async () => {
             let res = await request(app).get("/api/users/me").auth(token)
