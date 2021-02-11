@@ -41,6 +41,9 @@ router.post("/api/users/login", async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: "Invalid login credentials" })
         }
+        if (!user.isVerified) {
+            return res.status(401).json({ error: "Account is not verified"})
+        }
         const token = await user.generateToken()
         return res.json({
             id: user.id,
