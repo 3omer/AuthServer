@@ -11,7 +11,7 @@ const generateVerifLink = (user) => {
         expiresIn: process.env.VERIF_JWT_EXP
     })
 
-    return `http://${process.env.HOST || 'localhsot'}:${process.env.PORT}/api/users/verify?token=${token}`
+    return `http://${process.env.HOST || 'localhost'}:${process.env.PORT}/api/users/verify?token=${token}`
 }
 
 const transporter = nodemailer.createTransport({
