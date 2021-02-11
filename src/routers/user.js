@@ -2,6 +2,8 @@ const User = require("../models/User")
 const router = require("express").Router()
 const auth = require('../middleware/auth');
 const { generateVerifLink, sendVerifEmail } = require("../utils")
+const jwt = require("jsonwebtoken")
+
 
 // handle post: register
 router.post("/api/users", async (req, res) => {
@@ -27,9 +29,28 @@ router.post("/api/users", async (req, res) => {
     }
 })
 
-// verify account 
-router.get("/api/users/verify", async () => {
-    
+// verify account. the token is passed as query params
+router.get("/api/users/verify", async (req, res, next) => {
+    const token = req.query.token
+    try {
+        const payload = jwt.verify(token, process.env.JWT_KEY)
+        return res.json({
+            msg: "Your account is now activated"
+        })
+    } catch (error) {
+        console.error(error.message);
+        
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(400)
+            .json({ error: "Token expired. Try registering again" })
+        } else if ( error instanceof jwt.JsonWebTokenError) {
+            return res.status(400)
+            .json({ error: "Token is invalid or request is malformed" })
+        } else {
+            res.status(500)
+            .json({ error: "Something went really wrong. Try again later" })
+        }
+    }
 })
 
 // login
