@@ -1,20 +1,23 @@
 const nodemailer = require("nodemailer")
 const jwt = require("jsonwebtoken")
 
-const generateVerifToken = (user) => {
+
+const generateVerifLink = (user) => {
     const payload = {
         id: user.id,
     }
 
-    return jwt.sign(payload, process.env.VERIF_JWT_KEY, {
-        expiresIn: process.env.JWT_EXP
+    const token = jwt.sign(payload, process.env.JWT_KEY, {
+        expiresIn: process.env.VERIF_JWT_EXP
     })
+
+    return `http://${process.env.HOST || 'localhsot'}:${process.env.PORT}/api/users/verify?token=${token}`
 }
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE,
+    secure: process.env.SMTP_SECURE == "true",
     auth: {
         user: process.env.SMTP_USERNAME,
         pass: process.env.SMTP_PASSWORD
@@ -38,4 +41,4 @@ const sendVerifEmail = async (verifLink, receiverEmail) => {
     })
 }
 
-module.exports = { sendVerifEmail }
+module.exports = { sendVerifEmail, generateVerifLink }
