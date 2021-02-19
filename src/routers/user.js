@@ -1,17 +1,9 @@
 const User = require("../models/User")
 const router = require("express").Router()
 const auth = require('../middleware/auth');
+const { generateVerifLink, sendVerifEmail } = require("../utils")
+const jwt = require("jsonwebtoken")
 
-// get a list of registered users
-// require app administrator privildges
-// router.get("/api/users", async (req, res) => {
-//     try {
-//         let users = await User.find()
-//         return res.json(users)
-//     } catch (error) {
-//         res.status(500).send(error)
-//     }
-// })
 
 // handle post: register
 router.post("/api/users", async (req, res) => {
@@ -20,6 +12,9 @@ router.post("/api/users", async (req, res) => {
         const user = new User(data)
         await user.save()
         const token = await user.generateToken()
+        // build verification link to send it to user email
+        const verifLink = generateVerifLink(user)
+        await sendVerifEmail(verifLink, user.email)
         res.status(201).json({
             id: user.id,
             username: user.username,
@@ -29,7 +24,36 @@ router.post("/api/users", async (req, res) => {
 
     } catch (error) {
         // TODO: type of error: validation? connection?
+        console.error(error.message);
         res.status(400).send(error)
+    }
+})
+
+// verify account. the token is passed as query params
+router.get("/api/users/verify", async (req, res, next) => {
+    const token = req.query.token
+    try {
+        const payload = jwt.verify(token, process.env.JWT_KEY)
+        const user = await User.findById(payload.id)
+        if (!user) return res.status(400).json({error: "Account not found"})
+        user.isVerified = true
+        await user.save()
+        return res.json({
+            msg: "Your account is now activated"
+        })
+    } catch (error) {
+        console.error(error.message);
+        
+        if (error instanceof jwt.TokenExpiredError) {
+            return res.status(400)
+            .json({ error: "Token expired. Try registering again" })
+        } else if ( error instanceof jwt.JsonWebTokenError) {
+            return res.status(400)
+            .json({ error: "Token is invalid or request is malformed" })
+        } else {
+            res.status(500)
+            .json({ error: "Something went really wrong. Try again later" })
+        }
     }
 })
 
@@ -40,6 +64,9 @@ router.post("/api/users/login", async (req, res) => {
         const user = await User.findByCredentials(email, password)
         if (!user) {
             return res.status(401).json({ error: "Invalid login credentials" })
+        }
+        if (!user.isVerified) {
+            return res.status(401).json({ error: "Account is not verified"})
         }
         const token = await user.generateToken()
         return res.json({

@@ -76,23 +76,75 @@ describe("/api/users", () => {
 })
 
 
-const lgoinUser = async (user) => {
-    return await request(app).post("/api/users/login").send({
+const loginUser = async (user) => {
+    return request(app).post("/api/users/login").send({
         email: user.email,
         password: user.password
     })
 }
 
+const verifyAccount = async (user) => {
+    const token = utils.generateVerifLink(user).split("token=")[1]
+    return request(app).get(`/api/users/verify?token=${token}`)
+}
+
+const utils = require("../utils")
+describe("/api/users/verify", () => {
+    beforeEach(dropUsers)
+    it("activate account when called with valid token", async () => {
+
+        const me = getUsers()[0]
+        // register
+        let res = await registerUser(me)
+        expect(res.status).toEqual(201)
+        // verify
+        res = await verifyAccount(res.body)
+        expect(res.status).toEqual(200)
+        expect(res.body.msg).toEqual("Your account is now activated")
+    })
+
+    it('fails if no token provided', async () => {
+        const me = getUsers()[0]
+        // register
+        let res = await registerUser(me)
+        // verify
+        res = await request(app).get("/api/users/verify")
+        expect(res.status).toBe(400)
+    })
+    it("fails if token is incorrect", async () => {
+        const me = getUsers()[0]
+        let res = await registerUser(me)
+        res = await request(app)
+        .get("/api/users/verify?token=ljdflakdfmk.dnvsdnfknsdfklnfdfdfsfjn,fsd")
+        expect(res.status).toBe(400)
+    })
+})
+
 describe("api/users/login", () => {
     beforeEach(dropUsers)
 
     afterAll(dropUsers)
-
-    it("retrive a token", async () => {
-        let [user] = getUsers(1)
+    
+    it("fails if not verified", async() => {
+        let user = getUsers()[0]
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
-        res = await lgoinUser(user)
+        res = await loginUser(user)        
+        expect(res.status).toEqual(401)
+        expect(res.body.error).toEqual("Account is not verified")
+    })
+
+
+    it("login and get token", async () => {
+        let [user] = getUsers(1)
+        // register
+        let res = await registerUser(user)
+        expect(res.status).toEqual(201)
+        // verify account
+        res = await verifyAccount(res.body)
+        expect(res.status).toEqual(200)
+        // login
+        res = await loginUser(user)
         expect(res.status).toEqual(200)
         expect(res.body).toHaveProperty("token")
         expect(res.body).not.toHaveProperty("password")
@@ -101,7 +153,7 @@ describe("api/users/login", () => {
     it("fails on wrong credentials", async () => {
         let user = getUsers(1)[0]
         let res = await registerUser(user)
-        res = await lgoinUser({ email: user.email, password: user.password + "1" })
+        res = await loginUser({ email: user.email, password: user.password + "1" })
         expect(res.status).toEqual(401)
         expect(res.body).toHaveProperty("error")
         // expect(res.body.error).toIncludes("invalid email")
@@ -115,12 +167,16 @@ describe("api/users/me", () => {
     afterAll(dropUsers)
 
     const me = getUsers(1)[0]
-
+    
     it("get user profile", async () => {
+        // register
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
-
-        res = await lgoinUser({
+        // verify
+        res = await verifyAccount(res.body)
+        expect(res.status).toEqual(200)
+        // login
+        res = await loginUser({
             email: me.email,
             password: me.password
         })
@@ -141,7 +197,7 @@ describe("api/users/me", () => {
     })
 
     it("failes when token is tampered", async () => {
-        let res = await lgoinUser({
+        let res = await loginUser({
             email: me.email,
             password: me.password
         })
@@ -155,7 +211,8 @@ describe("api/users/me", () => {
     })
 
     it("failes when token expires after 2sec", async () => {
-        let token = await (await lgoinUser(me)).body.token
+        let res =  await loginUser(me)
+        let token = res.body.token
         expect(typeof token).toBe("string")
         setTimeout(async () => {
             let res = await request(app).get("/api/users/me").auth(token)
@@ -173,14 +230,21 @@ describe("/api/users/logout", () => {
     afterAll(dropUsers)
 
     it("delete user token", async () => {
-        process.env.JWT_EXP = "1h"
         let me = getUsers(1)[0]
-        await registerUser(me)
-        let token = await (await lgoinUser(me)).body.token
+        // register
+        let res = await registerUser(me)
+        
+        // verifiy
+        res = await verifyAccount(res.body)
+        // login
+        res = await loginUser(me)
+        let token = res.body.token
+
         // console.log(token)
         expect(typeof token).toBe("string")
-
-        let res = await request(app)
+        
+        // logout
+        res = await request(app)
             .post("/api/users/me/logout")
             .auth(token, { type: "bearer" })
 
@@ -189,6 +253,14 @@ describe("/api/users/logout", () => {
         // directly check the user document
         const user = await User.findOne({ email: me.email, 'tokens.token': token })
         expect(user).toEqual(null)
+        
+        // enusre token is invoked
+        res = await request(app)
+        .get('/api/users/me')
+        .auth(token, { type: 'bearer' })
+
+        expect(res.status).toEqual(400)
+        expect(res.body.error).toEqual("Token has been invoked")
 
     })
 

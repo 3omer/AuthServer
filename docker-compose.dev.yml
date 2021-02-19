@@ -1,0 +1,21 @@
+services:
+    web:
+        build: .
+        ports: 
+            - 5000:5000
+        env_file: .env
+        volumes: 
+            - ./:/usr/AuthServer
+        command: npm run start
+    
+    mongo:
+        image: mongo:4.4.3
+        ports: 
+            - 27017:27017
+        volumes: 
+            - mongodb:/data/db
+            - mongodb_config:/data/dbconfig
+
+volumes: 
+    mongodb:
+    mongodb_config:

@@ -1,4 +1,6 @@
 // test user model
+process.env.MONGODB_URL = "mongodb://localhost/authServer"
+
 const db = require("./../db/db")
 
 const User = require("./../models/User")
