@@ -39,11 +39,11 @@ describe("/api/users", () => {
     })
 
 
-    it("create a new user, retrive user + token", async () => {
+    it("create a new user, retrive user object", async () => {
         let user = getUsers()[0]
         const res = await registerUser(user)
         expect(res.status).toEqual(201)
-        expect(res.body).toHaveProperty("token")
+        expect(res.body.user).toHaveProperty("id")
         // password hash is not exposed
         expect(res.body).not.toHaveProperty("password")
     })
@@ -83,12 +83,13 @@ const loginUser = async (user) => {
     })
 }
 
+const utils = require("../utils")
+
 const verifyAccount = async (user) => {
     const token = utils.generateVerifLink(user).split("token=")[1]
     return request(app).get(`/api/users/verify?token=${token}`)
 }
 
-const utils = require("../utils")
 describe("/api/users/verify", () => {
     beforeEach(dropUsers)
     it("activate account when called with valid token", async () => {
@@ -98,7 +99,7 @@ describe("/api/users/verify", () => {
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
         // verify
-        res = await verifyAccount(res.body)
+        res = await verifyAccount(res.body.user)
         expect(res.status).toEqual(200)
         expect(res.body.msg).toEqual("Your account is now activated")
     })
@@ -141,7 +142,7 @@ describe("api/users/login", () => {
         let res = await registerUser(user)
         expect(res.status).toEqual(201)
         // verify account
-        res = await verifyAccount(res.body)
+        res = await verifyAccount(res.body.user)
         expect(res.status).toEqual(200)
         // login
         res = await loginUser(user)
@@ -173,7 +174,7 @@ describe("api/users/me", () => {
         let res = await registerUser(me)
         expect(res.status).toEqual(201)
         // verify
-        res = await verifyAccount(res.body)
+        res = await verifyAccount(res.body.user)
         expect(res.status).toEqual(200)
         // login
         res = await loginUser({
@@ -187,7 +188,7 @@ describe("api/users/me", () => {
 
         res = await request(app).get("/api/users/me").auth(token, { type: "bearer" })
         expect(res.status).toEqual(200)
-        expect(res.body).toHaveProperty("email")
+        expect(res.body.user).toHaveProperty("email")
 
     })
 
@@ -235,7 +236,8 @@ describe("/api/users/logout", () => {
         let res = await registerUser(me)
         
         // verifiy
-        res = await verifyAccount(res.body)
+        res = await verifyAccount(res.body.user)
+        expect(res.status).toBe(200)
         // login
         res = await loginUser(me)
         let token = res.body.token
