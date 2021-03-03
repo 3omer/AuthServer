@@ -1,31 +1,37 @@
 const User = require("../models/User")
 const router = require("express").Router()
 const auth = require('../middleware/auth');
-const { generateVerifLink, sendVerifEmail } = require("../utils")
+const { generateVerifLink, sendVerifEmail, isNodemailerError, logger } = require("../utils")
 const jwt = require("jsonwebtoken")
+const mongoose = require("mongoose")
 
 
 // handle post: register
 router.post("/api/users", async (req, res) => {
     const data = req.body
+    const user = new User(data)
     try {
-        const user = new User(data)
         await user.save()
-        const token = await user.generateToken()
         // build verification link to send it to user email
         const verifLink = generateVerifLink(user)
         await sendVerifEmail(verifLink, user.email)
-        res.status(201).json({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            token: token
-        })
+        res.status(201).json({ user })
 
     } catch (error) {
         // TODO: type of error: validation? connection?
-        console.error(error.message);
-        res.status(400).send(error)
+        logger.error(error)
+        if (error instanceof mongoose.Error.ValidationError) {
+            return res.status(400).json({ error: error.message })
+        }
+        // sending email failed
+        else if (isNodemailerError(error)) {
+            user.id ? res.status(201) : res.status(503)
+            return res.json({
+                error: "Verification email is not sent",
+                user,
+            })
+        }
+        next(error)
     }
 })
 
@@ -35,24 +41,24 @@ router.get("/api/users/verify", async (req, res, next) => {
     try {
         const payload = jwt.verify(token, process.env.JWT_KEY)
         const user = await User.findById(payload.id)
-        if (!user) return res.status(400).json({error: "Account not found"})
+        if (!user) return res.status(400).json({ error: "Account not found" })
         user.isVerified = true
         await user.save()
         return res.json({
             msg: "Your account is now activated"
         })
     } catch (error) {
-        console.error(error.message);
-        
+        logger.error(error.message);
+
         if (error instanceof jwt.TokenExpiredError) {
             return res.status(400)
-            .json({ error: "Token expired. Try registering again" })
-        } else if ( error instanceof jwt.JsonWebTokenError) {
+                .json({ error: "Token expired. Try registering again" })
+        } else if (error instanceof jwt.JsonWebTokenError) {
             return res.status(400)
-            .json({ error: "Token is invalid or request is malformed" })
+                .json({ error: "Token is invalid or request is malformed" })
         } else {
             res.status(500)
-            .json({ error: "Something went really wrong. Try again later" })
+                .json({ error: "Something went really wrong. Try again later" })
         }
     }
 })
@@ -66,19 +72,17 @@ router.post("/api/users/login", async (req, res) => {
             return res.status(401).json({ error: "Invalid login credentials" })
         }
         if (!user.isVerified) {
-            return res.status(401).json({ error: "Account is not verified"})
+            return res.status(401).json({ error: "Account is not verified" })
         }
         const token = await user.generateToken()
         return res.json({
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            token: token
+            user,
+            token
         })
 
     } catch (error) {
-        console.error(error)
-        res.status(500).send(error)
+        logger.error(error)
+        res.status(500).send(error.message)
     }
 })
 
@@ -86,7 +90,7 @@ router.post("/api/users/login", async (req, res) => {
 // get user profile
 // token required
 router.get("/api/users/me", auth, async (req, res) => {
-    res.json(req.user)
+    res.json({ user: req.user })
 })
 
 // delete user token
@@ -98,9 +102,9 @@ router.post("/api/users/me/logout", auth, async (req, res) => {
 
     try {
         await user.save()
-        return res.json({message: "Logged out successfully"})
+        return res.json({ message: "Logged out successfully" })
     } catch (error) {
-        res.status(500).json({error: "Internal error"})
+        res.status(500).json({ error: "Internal error" })
     }
 })
 
