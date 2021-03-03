@@ -4,8 +4,12 @@ services:
         ports: 
             - 5000:5000
         env_file: .env
+        environment: 
+            - MONGODB_URL=mongodb://mongo:27017/authServer
         volumes: 
             - ./:/usr/AuthServer
+        networks:
+            - mongo
         command: npm run start
     
     mongo:
@@ -15,6 +19,11 @@ services:
         volumes: 
             - mongodb:/data/db
             - mongodb_config:/data/dbconfig
+        networks:
+            - mongo
+
+networks:
+    mongo:
 
 volumes: 
     mongodb:
