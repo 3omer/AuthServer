@@ -16,11 +16,6 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true,
         lowercase: true,
-        validate: value => {
-            if (!validator.isEmail(value)) {
-                throw new Error({ "error": "Invalid Email address" })
-            }
-        }
     },
     password: {
         type: String,
@@ -39,6 +34,41 @@ const userSchema = mongoose.Schema({
     }]
 
 })
+
+
+// unique pathes validation
+userSchema.path('email').validate(async function (value) {
+    // in case this user already exist and is updating another field  
+    if (!this.isModified('email')) return true
+    const count = await User.countDocuments({ email: value })
+    return count <= 0
+}, 'Email already exists')
+
+userSchema.path('email').validate(validator.isEmail, 'Invalid email string')
+
+userSchema.path('username').validate(async function (value) {
+    if (!this.isModified('username')) return true
+    const count = await User.countDocuments({ username: value })
+    return count <= 0
+}, 'Username already exists')
+
+userSchema.path('password').validate(function(value){
+    return validator.isLength(value, { min: 7 })
+},
+    'Password should be at least 7 letters')
+
+userSchema.set('toJSON', {
+    transform: function (doc, ret, opt) {
+        ret.id = ret._id
+        delete ret['password']
+        delete ret['tokens']
+        delete ret['__v']
+        delete ret['_id']
+
+        return ret
+    }
+})
+
 
 userSchema.pre("save", async function () {
     const user = this
