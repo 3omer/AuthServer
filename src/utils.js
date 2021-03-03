@@ -24,13 +24,14 @@ const transporter = nodemailer.createTransport({
     }
 })
 
+
 /**
  * Send user email containing a verifivation link
  * @param {*} verifLink verification link typically a URL with a token to verify user's email
  * @param {*} receiverEmail user registered email address
  */
 const sendVerifEmail = async (verifLink, receiverEmail) => {
-    if(process.env.NODE_ENV === "test") return
+    if (process.env.NODE_ENV === "test") return
     return transporter.sendMail({
         from: '"Omar Mohammed" <omer@example.com>', // sender address
         to: receiverEmail, // list of receivers
@@ -39,6 +40,27 @@ const sendVerifEmail = async (verifLink, receiverEmail) => {
         html: `<p>Hello Click the buttion below to verify your account</p>
         <button><a href=${verifLink}>HERE</a></button>`, // html body
     })
+        .catch(error => {
+            error.name = "NodemailerError"
+            throw error
+        })
 }
 
-module.exports = { sendVerifEmail, generateVerifLink }
+
+const isNodemailerError = (error) => {
+    return error.name === "NodemailerError"
+}
+
+const logger = {
+    error(...params) {
+        if (process.env.NODE_ENV === 'test') return
+        console.error(...params)
+    },
+    info(...params) {
+        if (process.env.NODE_ENV === 'test') return
+        console.log(...params)
+
+    }
+}
+
+module.exports = { sendVerifEmail, generateVerifLink, isNodemailerError, logger }
