@@ -21,8 +21,10 @@ const auth = async (req, res, next) => {
         if(user.invokedTokens.find(jti => jti === payload.jti)) {
             return res.status(400).json({ error: "Token has been invoked"})
         }
-        req.user = user
+        
+        req.jti = payload.jti
         req.token = token
+        req.user = user
         next()
     } catch (error) {
         
