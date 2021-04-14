@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const validator = require("validator")
 const mongoose = require("mongoose")
+const uuid = require("uuid").v4
 
 // TODO: custom id
 const userSchema = mongoose.Schema({
@@ -26,13 +27,7 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    tokens: [{
-        token: {
-            type: String,
-            required: true
-        }
-    }]
-
+    invokedTokensId: [ String ]
 })
 
 
@@ -61,7 +56,7 @@ userSchema.set('toJSON', {
     transform: function (doc, ret, opt) {
         ret.id = ret._id
         delete ret['password']
-        delete ret['tokens']
+        delete ret['invokedTokensId']
         delete ret['__v']
         delete ret['_id']
 
@@ -88,9 +83,10 @@ userSchema.methods.generateToken = async function () {
     }
 
     const token = jwt.sign(payload, process.env.JWT_KEY, {
-        expiresIn: process.env.JWT_EXP
+        expiresIn: process.env.JWT_EXP,
+        jwtid: uuid()
     })
-    user.tokens = user.tokens.concat({ token })
+
     await user.save()
     return token
 }

@@ -252,9 +252,9 @@ describe("/api/users/logout", () => {
 
         // console.log(res.body)
         expect(res.status).toEqual(200)
-        // directly check the user document
-        const user = await User.findOne({ email: me.email, 'tokens.token': token })
-        expect(user).toEqual(null)
+        // check token id is added to invoked tokens list
+        const user = await User.findOne({ email: me.email})
+        expect(user.invokedTokensId.length).toEqual(1)
         
         // enusre token is invoked
         res = await request(app)
