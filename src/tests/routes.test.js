@@ -254,7 +254,7 @@ describe("/api/users/logout", () => {
         expect(res.status).toEqual(200)
         // check token id is added to invoked tokens list
         const user = await User.findOne({ email: me.email})
-        expect(user.invokedTokens.length).toEqual(1)
+        expect(user.invokedTokensId.length).toEqual(1)
         
         // enusre token is invoked
         res = await request(app)

@@ -27,7 +27,7 @@ const userSchema = mongoose.Schema({
         type: Boolean,
         default: false
     },
-    invokedTokens: [ String ]
+    invokedTokensId: [ String ]
 })
 
 
@@ -56,7 +56,7 @@ userSchema.set('toJSON', {
     transform: function (doc, ret, opt) {
         ret.id = ret._id
         delete ret['password']
-        delete ret['invokedTokens']
+        delete ret['invokedTokensId']
         delete ret['__v']
         delete ret['_id']
 

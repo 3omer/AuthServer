@@ -93,10 +93,10 @@ router.get("/api/users/me", auth, async (req, res) => {
     res.json({ user: req.user })
 })
 
-// add token to invokedTokens
+// add token to invokedTokensId
 router.post("/api/users/me/logout", auth, async (req, res) => {
     let user = req.user
-    user.invokedTokens.push(req.jti)
+    user.invokedTokensId.push(req.jti)
 
     try {
         await user.save()
