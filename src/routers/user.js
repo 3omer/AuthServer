@@ -1,6 +1,6 @@
 const User = require("../models/User")
 const router = require("express").Router()
-const { auth, userValidator, validationResult } = require('../middleware');
+const { auth, userValidator, loginDataValidaor, validationResult } = require('../middleware');
 const { generateVerifLink, sendVerifEmail, isNodemailerError, logger } = require("../utils")
 const jwt = require("jsonwebtoken")
 const mongoose = require("mongoose")
@@ -69,7 +69,11 @@ router.get("/api/users/verify", async (req, res, next) => {
 })
 
 // login
-router.post("/api/users/login", async (req, res) => {
+router.post("/api/users/login", loginDataValidaor(), async (req, res) => {
+    // is login creds there to begin with 
+    const vErrors = validationResult(req)
+    if (!vErrors.isEmpty()) return res.status(400).json({ error: "Invalid login credentials" })
+
     const { email, password } = req.body
     try {
         const user = await User.findByCredentials(email, password)
