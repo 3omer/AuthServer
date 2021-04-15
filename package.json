@@ -8,7 +8,7 @@
     "dev": "nodemon src/index.js",
     "debug": "nodemon --inspect=0.0.0.0:9229 src/index.js",
     "test": "jest",
-    "test:routes": "jest src/tests/routes.test.js"
+    "test:routes": "jest tests/routes.test.js"
   },
   "keywords": [],
   "author": "3omer",
@@ -27,6 +27,12 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.2",
+    "eslint": "^7.24.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-prettier": "^3.4.0",
+    "prettier": "^2.2.1",
     "supertest": "^6.0.1"
   },
   "jest": {

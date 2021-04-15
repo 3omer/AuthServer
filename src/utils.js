@@ -1,29 +1,29 @@
-const nodemailer = require("nodemailer")
-const jwt = require("jsonwebtoken")
-
+const nodemailer = require('nodemailer')
+const jwt = require('jsonwebtoken')
 
 const generateVerifLink = (user) => {
-    const payload = {
-        id: user.id,
-    }
+  const payload = {
+    id: user.id,
+  }
 
-    const token = jwt.sign(payload, process.env.JWT_KEY, {
-        expiresIn: process.env.VERIF_JWT_EXP
-    })
+  const token = jwt.sign(payload, process.env.JWT_KEY, {
+    expiresIn: process.env.VERIF_JWT_EXP,
+  })
 
-    return `http://${process.env.HOST || 'localhost'}:${process.env.PORT}/api/users/verify?token=${token}`
+  return `http://${process.env.HOST || 'localhost'}:${
+    process.env.PORT
+  }/api/users/verify?token=${token}`
 }
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: process.env.SMTP_SECURE == "true",
-    auth: {
-        user: process.env.SMTP_USERNAME,
-        pass: process.env.SMTP_PASSWORD
-    }
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: {
+    user: process.env.SMTP_USERNAME,
+    pass: process.env.SMTP_PASSWORD,
+  },
 })
-
 
 /**
  * Send user email containing a verifivation link
@@ -31,36 +31,39 @@ const transporter = nodemailer.createTransport({
  * @param {*} receiverEmail user registered email address
  */
 const sendVerifEmail = async (verifLink, receiverEmail) => {
-    if (process.env.NODE_ENV === "test") return
-    return transporter.sendMail({
-        from: '"Omar Mohammed" <omer@example.com>', // sender address
-        to: receiverEmail, // list of receivers
-        subject: "X-COMPANY verify  your account", // Subject line
-        text: "Hello", // plain text body
-        html: `<p>Hello Click the buttion below to verify your account</p>
+  if (process.env.NODE_ENV === 'test') return
+  transporter
+    .sendMail({
+      from: '"Omar Mohammed" <omer@example.com>', // sender address
+      to: receiverEmail, // list of receivers
+      subject: 'X-COMPANY verify  your account', // Subject line
+      text: 'Hello', // plain text body
+      html: `<p>Hello Click the buttion below to verify your account</p>
         <button><a href=${verifLink}>HERE</a></button>`, // html body
     })
-        .catch(error => {
-            error.name = "NodemailerError"
-            throw error
-        })
+    .catch((error) => {
+      // eslint-disable-next-line no-param-reassign
+      error.name = 'NodemailerError'
+      throw error
+    })
 }
 
-
-const isNodemailerError = (error) => {
-    return error.name === "NodemailerError"
-}
+const isNodemailerError = (error) => error.name === 'NodemailerError'
 
 const logger = {
-    error(...params) {
-        if (process.env.NODE_ENV === 'test') return
-        console.error(...params)
-    },
-    info(...params) {
-        if (process.env.NODE_ENV === 'test') return
-        console.log(...params)
-
-    }
+  error(...params) {
+    if (process.env.NODE_ENV === 'test') return
+    console.error(...params)
+  },
+  info(...params) {
+    if (process.env.NODE_ENV === 'test') return
+    console.log(...params)
+  },
 }
 
-module.exports = { sendVerifEmail, generateVerifLink, isNodemailerError, logger }
+module.exports = {
+  sendVerifEmail,
+  generateVerifLink,
+  isNodemailerError,
+  logger,
+}
