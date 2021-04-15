@@ -1,13 +1,18 @@
 const User = require("../models/User")
 const router = require("express").Router()
-const auth = require('../middleware/auth');
+const { auth, userValidator, validationResult } = require('../middleware');
 const { generateVerifLink, sendVerifEmail, isNodemailerError, logger } = require("../utils")
 const jwt = require("jsonwebtoken")
 const mongoose = require("mongoose")
 
 
 // handle post: register
-router.post("/api/users", async (req, res) => {
+router.post("/api/users", userValidator(), async (req, res) => {
+    
+    // check for validation errors
+    const vErrors = validationResult(req)
+    if (!vErrors.isEmpty()) return res.status(400).json({ errors: vErrors.array() })
+
     const data = req.body
     const user = new User(data)
     try {
