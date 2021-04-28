@@ -6,7 +6,7 @@ const User = require('../models/User')
 const {
   auth,
   userValidator,
-  loginDataValidaor,
+  loginDataValidator,
   validationResult,
 } = require('../middleware')
 
@@ -80,7 +80,7 @@ router.get('/api/users/verify', async (req, res, next) => {
 })
 
 // login
-router.post('/api/users/login', loginDataValidaor(), async (req, res) => {
+router.post('/api/users/login', loginDataValidator(), async (req, res) => {
   // is login creds there to begin with
   const vErrors = validationResult(req)
   if (!vErrors.isEmpty())

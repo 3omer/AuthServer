@@ -58,11 +58,11 @@ const userValidator = () => [
   passwordValidor,
 ]
 
-const loginDataValidaor = () => [emailValidator, passwordValidor]
+const loginDataValidator = () => [emailValidator, passwordValidor]
 
 module.exports = {
   auth,
   userValidator,
-  loginDataValidaor,
+  loginDataValidator,
   validationResult,
 }
