@@ -8,11 +8,15 @@ const {
   userValidator,
   loginDataValidator,
   validationResult,
+  emailValidator,
+  passwordValidor,
 } = require('../middleware')
 
 const {
   generateVerifLink,
   sendVerifEmail,
+  generatePassResetLink,
+  sendPasswordResetEmail,
   isNodemailerError,
   logger,
 } = require('../utils')
@@ -124,5 +128,55 @@ router.post('/api/users/me/logout', auth, async (req, res, next) => {
     return next(error)
   }
 })
+
+// request a password reset by submitting { email: 'user@email.com' }
+router.post(
+  '/api/users/request-reset',
+  emailValidator,
+  async (req, res, next) => {
+    try {
+      const user = await User.findOne({ email: req.body.email })
+      if (user) {
+        sendPasswordResetEmail(generatePassResetLink(user), user.email)
+      }
+    } catch (error) {
+      next(error)
+    }
+    // to prevent email spoofing; we are not going to inform wheather the email exist or not
+    res.json({
+      status: `You will recieve an email with the instructions to reset your password`,
+    })
+  }
+)
+
+// handel submitting new password
+// this endpoint is called with link sent to user email
+// the link has a token as a query (e.g /api/users/confirm-reset?token=ABCD)
+router.post(
+  '/api/users/confirm-reset',
+  passwordValidor,
+  async (req, res, next) => {
+    const { token } = req.query
+    try {
+      const payload = jwt.verify(token, process.env.JWT_KEY)
+      const { id } = payload
+      const newPassword = req.body.password
+      const user = await User.findById(id)
+      user.password = newPassword
+      user.save()
+      return res.json({ status: 'success' })
+    } catch (error) {
+      if (
+        error instanceof jwt.TokenExpiredError ||
+        error instanceof jwt.JsonWebTokenError
+      )
+        return res.status(400).json({
+          error:
+            'Link is expired or invalid, request a new password-reset link',
+        })
+      return next(error)
+    }
+  }
+)
 
 module.exports = router

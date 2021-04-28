@@ -65,4 +65,6 @@ module.exports = {
   userValidator,
   loginDataValidator,
   validationResult,
+  emailValidator,
+  passwordValidor,
 }
