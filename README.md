@@ -1,5 +1,6 @@
 # Authentication Service
 - [x] Email confirmation
+- [x] Forgot-password
 - [ ] Caching
 - [ ] Admin Panel
 - [ ] Roles
