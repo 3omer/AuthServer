@@ -9,7 +9,7 @@ const {
   loginDataValidator,
   validationResult,
   emailValidator,
-  passwordValidor,
+  passwordValidator,
 } = require('../middleware')
 
 const {
@@ -22,11 +22,11 @@ const {
 } = require('../utils')
 
 // handle post: register
-router.post('/api/users', userValidator(), async (req, res, next) => {
+router.post('/api/users', userValidator, async (req, res, next) => {
   // check for validation errors
   const vErrors = validationResult(req)
   if (!vErrors.isEmpty())
-    return res.status(400).json({ errors: vErrors.array() })
+    return res.status(422).json({ errors: vErrors.array() })
 
   const data = req.body
   const user = new User(data)
@@ -84,7 +84,7 @@ router.get('/api/users/verify', async (req, res, next) => {
 })
 
 // login
-router.post('/api/users/login', loginDataValidator(), async (req, res) => {
+router.post('/api/users/login', loginDataValidator, async (req, res) => {
   // is login creds there to begin with
   const vErrors = validationResult(req)
   if (!vErrors.isEmpty())
@@ -154,7 +154,7 @@ router.post(
 // the link has a token as a query (e.g /api/users/confirm-reset?token=ABCD)
 router.post(
   '/api/users/confirm-reset',
-  passwordValidor,
+  passwordValidator,
   async (req, res, next) => {
     const { token } = req.query
     try {

@@ -42,23 +42,23 @@ const emailValidator = body('email')
   .isEmail()
   .withMessage('you must enter a valid email')
 
-const passwordValidor = body('password')
+const passwordValidator = body('password')
   .isLength({ min: 8 })
   .withMessage('must be at least 8 characters')
 
-const userValidator = () => [
+const userValidator = [
   body('username')
     .isString()
     .isAlphanumeric()
-    .withMessage('only letters and digits are allowed')
+    .withMessage('only letters and numbers are allowed')
     .isLength({ min: 3 })
     .withMessage('must be at least 3 characters'),
 
   emailValidator,
-  passwordValidor,
+  passwordValidator,
 ]
 
-const loginDataValidator = () => [emailValidator, passwordValidor]
+const loginDataValidator = [emailValidator, passwordValidator]
 
 module.exports = {
   auth,
@@ -66,5 +66,5 @@ module.exports = {
   loginDataValidator,
   validationResult,
   emailValidator,
-  passwordValidor,
+  passwordValidator,
 }
