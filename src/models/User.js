@@ -78,7 +78,6 @@ userSchema.methods.generateToken = async function () {
     jwtid: uuid(),
   })
 
-  await user.save()
   return token
 }
 
