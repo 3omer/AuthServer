@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const validator = require('validator')
@@ -35,7 +36,7 @@ userSchema.path('email').validate(async function (value) {
   if (!this.isModified('email')) return true
   const count = await mongoose.model('User').countDocuments({ email: value })
   return count <= 0
-}, 'Email already exists')
+}, 'this email already in use')
 
 userSchema.path('email').validate(validator.isEmail, 'Invalid email string')
 
@@ -43,14 +44,7 @@ userSchema.path('username').validate(async function (value) {
   if (!this.isModified('username')) return true
   const count = await mongoose.model('User').countDocuments({ username: value })
   return count <= 0
-}, 'Username already exists')
-
-userSchema
-  .path('password')
-  .validate(
-    (value) => validator.isLength(value, { min: 7 }),
-    'Password should be at least 7 letters'
-  )
+}, 'this username already in use, try another one')
 
 /* eslint-disable no-underscore-dangle, no-param-reassign, no-unused-vars */
 userSchema.set('toJSON', {
@@ -64,14 +58,10 @@ userSchema.set('toJSON', {
     return ret
   },
 })
-/* eslint-enable */
 
 userSchema.pre('save', async function () {
   const user = this
   if (user.isModified('password')) {
-    if (!validator.isLength(user.password, { min: 7 })) {
-      throw new Error({ error: 'Short password, minimum characters are 7' })
-    }
     user.password = await bcrypt.hash(user.password, 8)
   }
 })

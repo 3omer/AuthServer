@@ -58,7 +58,7 @@ describe('/api/users', () => {
     user.email = 'notreallyandemail@.com'
 
     const res = await registerUser(user)
-    expect(res.status).toEqual(400)
+    expect(res.status).toEqual(422)
     // expect(res.body.error).toIncludes("invalid")
   })
 
@@ -66,7 +66,7 @@ describe('/api/users', () => {
     const [user] = getUsers(1)
     user.password = 'short'
     const res = await registerUser(user)
-    expect(res.status).toEqual(400)
+    expect(res.status).toEqual(422)
   })
 })
 
