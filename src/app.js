@@ -1,9 +1,10 @@
 require('dotenv').config()
+require('./db/db') // init mongo connecetion
+require('./redis') // init redis
 const express = require('express')
 
 const app = express()
 const morgan = require('morgan')
-require('./db/db')
 const userRouter = require('./routers/user')
 const { logger } = require('./utils')
 
