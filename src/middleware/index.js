@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const { body, validationResult } = require('express-validator')
 const User = require('../models/User')
+const { revokedTokenStore } = require('../redis')
 
 // pull the token from header, verify, fetch user object, append it to req
 const auth = async (req, res, next) => {
@@ -19,8 +20,8 @@ const auth = async (req, res, next) => {
     if (!user.isVerified) {
       return res.status(400).json({ error: 'Account is not verified' })
     }
-    if (user.invokedTokensId.find((jti) => jti === payload.jti)) {
-      return res.status(400).json({ error: 'Token has been invoked' })
+    if (await revokedTokenStore.find(payload.jti)) {
+      return res.status(400).json({ error: 'Token has been revoked' })
     }
 
     req.jti = payload.jti

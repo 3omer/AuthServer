@@ -11,4 +11,19 @@ client.on('connect', () => {
 })
 
 client.on('error', (error) => logger.error(error))
-module.exports = { client }
+
+const KEY_PREFIX_REVOKED_TOKENS = 'REVOKED_TOKENS:'
+
+const revokedTokenStore = {
+  async find(jti) {
+    const key = KEY_PREFIX_REVOKED_TOKENS + jti
+    const isRevoked = await client.get(key)
+    return isRevoked
+  },
+  async insert(jti, token) {
+    const key = KEY_PREFIX_REVOKED_TOKENS + jti
+    const TTL = 12 * 60 * 60 // 12hr is the token's exp time
+    await client.set(key, token, 'EX', TTL)
+  },
+}
+module.exports = { client, revokedTokenStore }

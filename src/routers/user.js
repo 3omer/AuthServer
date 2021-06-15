@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const router = require('express').Router()
 const mongoose = require('mongoose')
 const User = require('../models/User')
+const { revokedTokenStore } = require('../redis')
 
 const {
   auth,
@@ -119,7 +120,7 @@ router.get('/api/users/me', auth, async (req, res) => {
 // add token to invokedTokensId
 router.post('/api/users/me/logout', auth, async (req, res, next) => {
   const { user } = req
-  user.invokedTokensId.push(req.jti)
+  revokedTokenStore.insert(req.jti, req.token)
 
   try {
     await user.save()

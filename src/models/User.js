@@ -27,7 +27,6 @@ const userSchema = mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  invokedTokensId: [String],
 })
 
 // unique pathes validation

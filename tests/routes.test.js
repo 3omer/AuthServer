@@ -242,9 +242,6 @@ describe('/api/users/logout', () => {
 
     // console.log(res.body)
     expect(res.status).toEqual(200)
-    // check token id is added to invoked tokens list
-    const user = await User.findOne({ email: me.email })
-    expect(user.invokedTokensId.length).toEqual(1)
 
     // enusre token is invoked
     res = await request(app)
@@ -252,6 +249,6 @@ describe('/api/users/logout', () => {
       .auth(token, { type: 'bearer' })
 
     expect(res.status).toEqual(400)
-    expect(res.body.error).toEqual('Token has been invoked')
+    expect(res.body.error).toEqual('Token has been revoked')
   })
 })
